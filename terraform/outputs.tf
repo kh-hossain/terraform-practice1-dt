@@ -46,3 +46,21 @@ output "bastion_internal_ip" {
 output "bastion_ssh_command" {
   value = module.bastion.ssh_command
 }
+
+# GKE outputs
+
+output "gke_cluster_name" {
+  value = module.gke.cluster_name
+}
+
+output "gke_cluster_location" {
+  value = module.gke.cluster_location
+}
+
+output "gke_node_service_account_email" {
+  value = module.gke.node_service_account_email
+}
+
+output "gke_get_credentials_command" {
+  value = module.gke.get_credentials_command
+}

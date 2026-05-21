@@ -83,3 +83,29 @@ variable "bastion_authorized_members" {
   # Example:
   # ["user:your-email@example.com"]
 }
+
+# GKE cluster variables
+
+variable "gke_node_locations" {
+  type        = list(string)
+  description = "Zones where GKE worker nodes should run"
+  default     = ["us-central1-a"]
+}
+
+variable "gke_node_machine_type" {
+  type        = string
+  description = "Machine type for GKE worker nodes"
+  default     = "e2-medium"
+}
+
+variable "gke_min_node_count" {
+  type        = number
+  description = "Minimum number of nodes in the GKE node pool"
+  default     = 1
+}
+
+variable "gke_max_node_count" {
+  type        = number
+  description = "Maximum number of nodes in the GKE node pool"
+  default     = 2
+}

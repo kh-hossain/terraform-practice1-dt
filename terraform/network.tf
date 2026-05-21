@@ -1,7 +1,3 @@
-locals {
-  name_prefix = "${var.activity_name}-${var.environment}"
-}
-
 module "network" {
   source = "./modules/network"
 
