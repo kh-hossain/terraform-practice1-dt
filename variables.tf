@@ -17,4 +17,5 @@ variable "region" {
 variable "terraform_service_account" {
   type        = string
   description = "Service account used by Terraform through impersonation"
+  sensitive = true
 }
