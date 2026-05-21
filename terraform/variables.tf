@@ -39,3 +39,29 @@ variable "activity_name" {
   type        = string
   description = "Name of the activity for tagging purposes"
 }
+
+# Variables for network configuration
+
+variable "restricted_subnet_cidr" {
+  type        = string
+  description = "Primary CIDR range for the restricted subnet hosting private GKE nodes"
+  default     = "10.10.0.0/24"
+}
+
+variable "management_subnet_cidr" {
+  type        = string
+  description = "Primary CIDR range for the management subnet hosting the bastion VM"
+  default     = "10.20.0.0/24"
+}
+
+variable "pods_secondary_cidr" {
+  type        = string
+  description = "Secondary CIDR range for GKE Pods"
+  default     = "10.30.0.0/16"
+}
+
+variable "services_secondary_cidr" {
+  type        = string
+  description = "Secondary CIDR range for GKE Services"
+  default     = "10.40.0.0/20"
+}
