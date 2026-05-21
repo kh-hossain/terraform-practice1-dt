@@ -31,3 +31,18 @@ output "restricted_subnet_self_link" {
 output "management_subnet_self_link" {
   value = module.network.management_subnet_self_link
 }
+
+
+# Bastion VM outputs
+
+output "bastion_name" {
+  value = module.bastion.name
+}
+
+output "bastion_internal_ip" {
+  value = module.bastion.internal_ip
+}
+
+output "bastion_ssh_command" {
+  value = module.bastion.ssh_command
+}

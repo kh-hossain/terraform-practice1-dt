@@ -65,3 +65,21 @@ variable "services_secondary_cidr" {
   description = "Secondary CIDR range for GKE Services"
   default     = "10.40.0.0/20"
 }
+
+
+# Bastion VM variables
+
+variable "bastion_zone" {
+  type        = string
+  description = "Zone where the bastion VM will be created"
+  default     = "us-central1-a"
+}
+
+variable "bastion_authorized_members" {
+  type        = list(string)
+  description = "IAM members allowed to SSH to the bastion through IAP"
+  default = [] # Makes the module more flexible - even if not set, it won't cause an error
+
+  # Example:
+  # ["user:your-email@example.com"]
+}
