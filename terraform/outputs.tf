@@ -64,3 +64,18 @@ output "gke_node_service_account_email" {
 output "gke_get_credentials_command" {
   value = module.gke.get_credentials_command
 }
+
+
+# Artifact Registry outputs
+
+output "artifact_registry_name" {
+  value = module.artifact_registry.name
+}
+
+output "artifact_registry_url" {
+  value = module.artifact_registry.url
+}
+
+output "demo_image_base" {
+  value = module.artifact_registry.demo_image_base
+}

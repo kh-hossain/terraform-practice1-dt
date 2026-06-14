@@ -1,5 +1,5 @@
 locals {
-  cluster_name = "${var.name_prefix}-gke"
+  cluster_name  = "${var.name_prefix}-gke"
   nodepool_name = "primary"
 
   node_service_account_name = "${var.name_prefix}-gke-node"
@@ -40,8 +40,8 @@ module "cluster" {
     }
 
     ip_access = {
-      disable_public_endpoint                 = true
-      gcp_public_cidrs_access_enabled         = false
+      disable_public_endpoint                        = true
+      gcp_public_cidrs_access_enabled                = false
       private_endpoint_authorized_ranges_enforcement = true
 
       authorized_ranges = {
@@ -72,10 +72,10 @@ module "cluster" {
   }
 
   enable_addons = {
-    http_load_balancing              = true
-    horizontal_pod_autoscaling       = true
-    gce_persistent_disk_csi_driver   = true
-    dns_cache                        = true
+    http_load_balancing            = true
+    horizontal_pod_autoscaling     = true
+    gce_persistent_disk_csi_driver = true
+    dns_cache                      = true
   }
 
   logging_config = {
@@ -93,17 +93,17 @@ module "cluster" {
     workload_metadata_config_mode = "GKE_METADATA"
 
     tags = [
-        "${var.name_prefix}-gke-node"
+      "${var.name_prefix}-gke-node"
     ]
 
     labels = {
-        component = "gke"
+      component = "gke"
     }
 
-depends_on = [
-    module.node_sa
-]
-}
+    depends_on = [
+      module.node_sa
+    ]
+  }
 
   labels = {
     component = "gke"

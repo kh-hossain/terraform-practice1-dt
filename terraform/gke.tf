@@ -1,12 +1,12 @@
 module "gke" {
   source = "./modules/gke"
 
-  project_id  = var.project_id
-  region      = var.region
-  name_prefix = local.name_prefix
-  terraform_service_account  = var.terraform_service_account
+  project_id                = var.project_id
+  region                    = var.region
+  name_prefix               = local.name_prefix
+  terraform_service_account = var.terraform_service_account
 
-  network_self_link          = module.network.network_self_link
+  network_self_link           = module.network.network_self_link
   restricted_subnet_self_link = module.network.restricted_subnet_self_link
 
   pods_secondary_range_name     = module.network.pods_secondary_range_name

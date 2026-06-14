@@ -78,7 +78,7 @@ variable "bastion_zone" {
 variable "bastion_authorized_members" {
   type        = list(string)
   description = "IAM members allowed to SSH to the bastion through IAP"
-  default = [] # Makes the module more flexible - even if not set, it won't cause an error
+  default     = [] # Makes the module more flexible - even if not set, it won't cause an error
 
   # Example:
   # ["user:your-email@example.com"]
@@ -109,3 +109,22 @@ variable "gke_max_node_count" {
   description = "Maximum number of nodes in the GKE node pool"
   default     = 2
 }
+
+
+
+# Artifact Registry variables
+
+variable "artifact_registry_reader_members" {
+  type        = list(string)
+  description = "Additional IAM members allowed to read/pull images from Artifact Registry"
+  default     = []
+}
+
+variable "artifact_registry_writer_members" {
+  type        = list(string)
+  description = "IAM members allowed to push images to Artifact Registry"
+  default     = []
+}
+
+
+
