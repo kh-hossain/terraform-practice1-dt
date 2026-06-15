@@ -14,7 +14,8 @@ module "bastion_sa" {
   iam_project_roles = {
     "${var.project_id}" = [
       "roles/logging.logWriter",
-      "roles/monitoring.metricWriter"
+      "roles/monitoring.metricWriter",
+      "roles/container.developer"
     ]
   }
 }
@@ -76,6 +77,7 @@ module "bastion_vm" {
 
   metadata = {
     enable-oslogin = "TRUE"
+    startup-script = file("${path.module}/startup.sh")
   }
 
   service_account = {

@@ -128,3 +128,25 @@ variable "artifact_registry_writer_members" {
 
 
 
+# Redis variables
+
+variable "redis_psc_subnet_cidr" {
+  type        = string
+  description = "CIDR range for the Private Service Connect subnet used by Memorystore Redis Cluster"
+  default     = "10.50.0.0/29" # A /29 is tiny but intentional here because it is for PSC endpoints, not for app pods or nodes.
+}
+
+variable "redis_shard_count" {
+  type        = number
+  description = "Number of Redis Cluster shards"
+  default     = 3
+}
+
+variable "redis_replica_count" {
+  type        = number
+  description = "Number of replicas per Redis shard"
+  default     = 1
+}
+
+
+

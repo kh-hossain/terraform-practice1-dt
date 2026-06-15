@@ -1,3 +1,13 @@
+# General outputs
+
+output "project_id" {
+  value = var.project_id
+}
+
+output "region" {
+  value = var.region
+}
+
 # Networking outputs
 
 output "network_name" {
@@ -47,6 +57,10 @@ output "bastion_ssh_command" {
   value = module.bastion.ssh_command
 }
 
+output "bastion_zone" {
+  value = module.bastion.zone
+}
+
 # GKE outputs
 
 output "gke_cluster_name" {
@@ -78,4 +92,23 @@ output "artifact_registry_url" {
 
 output "demo_image_base" {
   value = module.artifact_registry.demo_image_base
+}
+
+
+# Redis outputs
+
+output "redis_name" {
+  value = module.redis.name
+}
+
+output "redis_host" {
+  value = module.redis.host
+}
+
+output "redis_port" {
+  value = module.redis.port
+}
+
+output "redis_discovery_endpoints" {
+  value = module.redis.discovery_endpoints
 }
