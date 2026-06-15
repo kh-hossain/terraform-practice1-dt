@@ -127,7 +127,6 @@ variable "artifact_registry_writer_members" {
 }
 
 
-
 # Redis variables
 
 variable "redis_psc_subnet_cidr" {
