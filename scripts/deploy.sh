@@ -37,19 +37,34 @@ envsubst < "${K8S_DIR}/deployment.yaml.tpl" > "${RENDER_DIR}/deployment.yaml"
 # since it has network access to the GKE cluster and also has gcloud and kubectl installed via startup script.
 
 REMOTE_DIR="/tmp/demo-app-k8s"
+REMOTE_TARBALL="/tmp/demo-app-k8s.tar.gz"
+LOCAL_TARBALL=".generated/demo-app-k8s.tar.gz"
+
+echo "Checking rendered manifests locally..."
+ls -la "${RENDER_DIR}"
+
+echo "Creating manifest archive..."
+tar -C "${RENDER_DIR}" -czf "${LOCAL_TARBALL}" .
 
 echo "Preparing remote manifest directory on bastion..."
 gcloud compute ssh "${BASTION_NAME}" \
   --project "${PROJECT_ID}" \
   --zone "${BASTION_ZONE}" \
   --tunnel-through-iap \
-  --command "rm -rf ${REMOTE_DIR} && mkdir -p ${REMOTE_DIR}"
+  --command "rm -rf ${REMOTE_DIR} ${REMOTE_TARBALL} && mkdir -p ${REMOTE_DIR}"
 
-echo "Copying rendered Kubernetes manifests to bastion..."
-gcloud compute scp --recurse "${RENDER_DIR}/." "${BASTION_NAME}:${REMOTE_DIR}" \
+echo "Copying manifest archive to bastion..."
+gcloud compute scp "${LOCAL_TARBALL}" "${BASTION_NAME}:${REMOTE_TARBALL}" \
   --project "${PROJECT_ID}" \
   --zone "${BASTION_ZONE}" \
   --tunnel-through-iap
+
+echo "Extracting manifests on bastion..."
+gcloud compute ssh "${BASTION_NAME}" \
+  --project "${PROJECT_ID}" \
+  --zone "${BASTION_ZONE}" \
+  --tunnel-through-iap \
+  --command "tar -xzf ${REMOTE_TARBALL} -C ${REMOTE_DIR} && ls -la ${REMOTE_DIR}"
 
 echo "Applying Kubernetes manifests from bastion..."
 gcloud compute ssh "${BASTION_NAME}" \
@@ -58,13 +73,34 @@ gcloud compute ssh "${BASTION_NAME}" \
   --tunnel-through-iap \
   --command "
     set -euo pipefail
+
     gcloud config set project ${PROJECT_ID}
-    gcloud container clusters get-credentials ${CLUSTER_NAME} --region ${CLUSTER_LOCATION} --project ${PROJECT_ID} --internal-ip
+
+    gcloud container clusters get-credentials ${CLUSTER_NAME} \
+      --region ${CLUSTER_LOCATION} \
+      --project ${PROJECT_ID} \
+      --internal-ip
+
     kubectl apply -f ${REMOTE_DIR}/namespace.yaml
     kubectl apply -f ${REMOTE_DIR}/backendconfig.yaml
     kubectl apply -f ${REMOTE_DIR}/deployment.yaml
     kubectl apply -f ${REMOTE_DIR}/service.yaml
     kubectl apply -f ${REMOTE_DIR}/ingress.yaml
-    kubectl -n demo-app rollout status deployment/demo-app --timeout=300s
+
+    if ! kubectl -n demo-app rollout status deployment/demo-app --timeout=300s; then
+      echo 'Rollout did not complete. Showing diagnostics...'
+      kubectl -n demo-app get pods -o wide
+      kubectl -n demo-app get events --sort-by=.lastTimestamp | tail -40
+      kubectl -n demo-app describe deployment demo-app
+      echo 'Showing pod logs...'
+      for pod in \$(kubectl -n demo-app get pods -l app=demo-app -o jsonpath='{.items[*].metadata.name}'); do
+        echo "===== Logs for \$pod ====="
+        kubectl -n demo-app logs "\$pod" --all-containers=true --tail=100 || true
+        echo "===== Previous logs for \$pod ====="
+        kubectl -n demo-app logs "\$pod" --all-containers=true --previous --tail=100 || true
+        done
+      exit 1
+    fi
+
     kubectl -n demo-app get pods,svc,ingress
   "

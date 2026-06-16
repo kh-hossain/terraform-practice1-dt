@@ -107,7 +107,7 @@ variable "gke_min_node_count" {
 variable "gke_max_node_count" {
   type        = number
   description = "Maximum number of nodes in the GKE node pool"
-  default     = 2
+  default     = 3 # Setting a default allows for easier testing and development, but can be overridden for production use. 
 }
 
 
