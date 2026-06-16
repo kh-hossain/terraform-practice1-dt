@@ -94,9 +94,9 @@ gcloud compute ssh "${BASTION_NAME}" \
       kubectl -n demo-app describe deployment demo-app
       echo 'Showing pod logs...'
       for pod in \$(kubectl -n demo-app get pods -l app=demo-app -o jsonpath='{.items[*].metadata.name}'); do
-        echo "===== Logs for \$pod ====="
+        echo '===== Logs for \$pod ====='
         kubectl -n demo-app logs "\$pod" --all-containers=true --tail=100 || true
-        echo "===== Previous logs for \$pod ====="
+        echo '===== Previous logs for \$pod ====='
         kubectl -n demo-app logs "\$pod" --all-containers=true --previous --tail=100 || true
         done
       exit 1
