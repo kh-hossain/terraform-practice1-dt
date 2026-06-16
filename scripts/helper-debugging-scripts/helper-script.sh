@@ -13,19 +13,17 @@ case "${ACTION}" in
     ;;
   *)
     echo "Usage:"
-    echo "  bash scripts/redis-counter.sh get"
-    echo "  bash scripts/redis-counter.sh reset"
-    echo "  bash scripts/redis-counter.sh set 123"
-    echo "  bash scripts/redis-counter.sh keys"
-    echo "  bash scripts/redis-counter.sh delete"
+    echo "  bash $0 get"
+    echo "  bash $0 reset"
+    echo "  bash $0 set 123"
+    echo "  bash $0 keys"
+    echo "  bash $0 delete"
     exit 1
     ;;
 esac
 
 if [[ "${ACTION}" == "set" && ! "${VALUE}" =~ ^-?[0-9]+$ ]]; then
   echo "ERROR: set requires an integer value."
-  echo "Example:"
-  echo "  bash scripts/redis-counter.sh set 0"
   exit 1
 fi
 
@@ -33,10 +31,12 @@ PROJECT_ID="$(terraform -chdir="${TF_DIR}" output -raw project_id)"
 BASTION_NAME="$(terraform -chdir="${TF_DIR}" output -raw bastion_name)"
 BASTION_ZONE="$(terraform -chdir="${TF_DIR}" output -raw bastion_zone)"
 
+echo "Running Redis action: ${ACTION}"
+
 REMOTE_COMMAND=$(cat <<EOF
 set -euo pipefail
 
-kubectl -n "${NAMESPACE}" exec deploy/"${DEPLOYMENT}" -- env REDIS_ACTION="${ACTION}" REDIS_VALUE="${VALUE}" python - <<'PY'
+kubectl -n "${NAMESPACE}" exec -i deploy/"${DEPLOYMENT}" -- env REDIS_ACTION="${ACTION}" REDIS_VALUE="${VALUE}" python - <<'PY'
 import os
 import sys
 
@@ -45,13 +45,13 @@ from redis.cluster import RedisCluster
 from redis.exceptions import RedisError
 
 
-ACTION = os.getenv("REDIS_ACTION", "get")
-VALUE = os.getenv("REDIS_VALUE", "0")
+action = os.getenv("REDIS_ACTION", "get")
+value = os.getenv("REDIS_VALUE", "0")
 
-REDIS_HOST = os.getenv("REDIS_HOST")
-REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
-REDIS_DB = int(os.getenv("REDIS_DB", "0"))
-REDIS_CLUSTER_MODE = os.getenv("REDIS_CLUSTER_MODE", "true").lower() in [
+redis_host = os.getenv("REDIS_HOST")
+redis_port = int(os.getenv("REDIS_PORT", "6379"))
+redis_db = int(os.getenv("REDIS_DB", "0"))
+redis_cluster_mode = os.getenv("REDIS_CLUSTER_MODE", "true").lower() in [
     "1",
     "true",
     "yes",
@@ -59,17 +59,17 @@ REDIS_CLUSTER_MODE = os.getenv("REDIS_CLUSTER_MODE", "true").lower() in [
 
 
 def create_client():
-    if REDIS_CLUSTER_MODE:
+    if redis_cluster_mode:
         return RedisCluster(
-            host=REDIS_HOST,
-            port=REDIS_PORT,
+            host=redis_host,
+            port=redis_port,
             decode_responses=True,
         )
 
     return redis.Redis(
-        host=REDIS_HOST,
-        port=REDIS_PORT,
-        db=REDIS_DB,
+        host=redis_host,
+        port=redis_port,
+        db=redis_db,
         decode_responses=True,
     )
 
@@ -77,29 +77,32 @@ def create_client():
 try:
     r = create_client()
 
-    if ACTION == "get":
+    if action == "get":
         print(f"counter={r.get('counter')}")
 
-    elif ACTION == "reset":
+    elif action == "reset":
         r.set("counter", 0)
         print(f"counter reset to {r.get('counter')}")
 
-    elif ACTION == "set":
-        r.set("counter", int(VALUE))
+    elif action == "set":
+        r.set("counter", int(value))
         print(f"counter set to {r.get('counter')}")
 
-    elif ACTION == "keys":
+    elif action == "keys":
         keys = list(r.scan_iter(match="*", count=100))
-        print("keys:")
-        for key in keys:
-            print(f"- {key}")
+        if not keys:
+            print("No keys found.")
+        else:
+            print("keys:")
+            for key in keys:
+                print(f"- {key}")
 
-    elif ACTION == "delete":
+    elif action == "delete":
         deleted = r.delete("counter")
         print(f"deleted counter={deleted}")
 
     else:
-        print(f"Unsupported action: {ACTION}", file=sys.stderr)
+        print(f"Unsupported action: {action}", file=sys.stderr)
         sys.exit(1)
 
 except RedisError as e:
