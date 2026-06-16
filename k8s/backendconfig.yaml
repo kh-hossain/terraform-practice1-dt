@@ -10,5 +10,5 @@ spec:
     healthyThreshold: 1
     unhealthyThreshold: 3
     type: HTTP
-    requestPath: /
+    requestPath: /health
     port: 8000

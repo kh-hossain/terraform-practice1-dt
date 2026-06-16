@@ -34,15 +34,17 @@ spec:
               value: "${REDIS_PORT}"
             - name: REDIS_DB
               value: "0"
+            - name: REDIS_CLUSTER_MODE
+              value: "true"
           readinessProbe:
             httpGet:
-              path: /
+              path: /health
               port: 8000
             initialDelaySeconds: 10
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: /
+              path: /health
               port: 8000
             initialDelaySeconds: 30
             periodSeconds: 20
