@@ -1,0 +1,21 @@
+# env-dev.tfvars.example
+# Copy this file to terraform/env-dev.tfvars and edit values for your project.
+# Do not commit real env-dev.tfvars files.
+
+terraform_service_account = "terraform-service-account1@project.iam.gserviceaccount.com"
+environment               = "dev"
+project_id                = "project"
+activity_name             = "gcp-fabric-lab"
+
+bastion_zone = "us-central1-a"
+
+bastion_authorized_members = [
+  "user:user1@company.com",
+  "user:user2@company.com"
+]
+
+artifact_registry_writer_members = [
+  "user:user1@company.com"
+]
+
+gke_max_node_count = 4
