@@ -1,0 +1,7 @@
+# terraform.tfvars.example
+# Copy this file to terraform/terraform.tfvars and edit values for your workspace.
+# Do not commit real terraform.tfvars files.
+
+region       = "us-central1"
+owner        = "user1"
+tf_repo_name = "terraform-practice1-dt"
