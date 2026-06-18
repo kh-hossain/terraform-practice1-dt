@@ -1,3 +1,5 @@
+![Description of image](docs/GCP Architecure 1.png)
+
 # GCP Terraform Practice Project
 
 This repository provisions a private Google Cloud environment with Terraform (using Fabric modules) and deploys a containerized Python/Tornado demo application to GKE. The final running application is exposed through a GKE Ingress-backed external Application Load Balancer, uses Artifact Registry for container images, and stores a shared counter in Memorystore for Redis Cluster.
