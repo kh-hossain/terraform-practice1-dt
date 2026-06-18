@@ -1,4 +1,4 @@
-![Description of image](docs/GCP Architecure 1.png)
+![Architecture](docs/GCP-Architecure-1.png)
 
 # GCP Terraform Practice Project
 
