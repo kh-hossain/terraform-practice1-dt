@@ -148,4 +148,10 @@ variable "redis_replica_count" {
 }
 
 
+# Reviewer variables
 
+variable "reviewer_members" {
+  type        = list(string)
+  description = "IAM members allowed to review the deployed environment"
+  default     = []
+}
