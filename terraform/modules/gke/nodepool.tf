@@ -114,7 +114,7 @@ module "primary_nodepool" {
     email = module.node_sa.email
 
     oauth_scopes = [
-     # Give the node VM the broad Google Cloud OAuth scope.
+      # Give the node VM the broad Google Cloud OAuth scope.
       #
       # OAuth scopes are an older Compute Engine access-control layer. They
       # control which Google API tokens the node is allowed to request, but they
