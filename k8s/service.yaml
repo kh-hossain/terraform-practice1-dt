@@ -140,6 +140,14 @@ spec:
   selector:
     app: demo-app
 
+# User
+#  ↓ HTTP port 80 on load balancer
+# Ingress
+#  ↓ Service port 80
+# Service
+#  ↓ targetPort 8000
+# Pod/container
+#  ↓ app listens on 8000
   ports:
     - name: http
 

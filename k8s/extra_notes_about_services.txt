@@ -1,0 +1,43 @@
+# Extra notes abou service and ingress:
+
+# Ingress exposes the demo app through a Google Cloud external HTTP/Application Load Balancer.
+#
+# This manifest uses the GKE Ingress controller through the annotation:
+#   kubernetes.io/ingress.class: "gce"
+#
+# In GKE, the "gce" Ingress class creates an external Google Cloud HTTP(S) Application Load Balancer for HTTP traffic to the application.
+#
+# The load balancer may appear in Google Cloud as a "classic" Application Load
+# Balancer. That is expected for this GKE Ingress path and does not mean the
+# deployment is broken.
+#
+# Traffic flow:
+#   internet user
+#     -> Google Cloud external HTTP/Application Load Balancer
+#     -> GKE Ingress
+#     -> demo-app-service
+#     -> demo app Pods
+#
+# We use Ingress here because it is a simple, standard GKE way to expose an HTTP application. It integrates with:
+#   - the Kubernetes Service
+#   - the Service NEG annotation
+#   - BackendConfig health check settings
+#   - the Google Cloud external load balancer
+#
+# This still satisfies the goal of exposing the app through an HTTP load
+# balancer. The app Pods remain private; the public entry point is the Google
+# Cloud load balancer, not the Pods themselves.
+#
+# In this project, using spec.ingressClassName did not cause the GKE controller
+# to reconcile the Ingress correctly, so we use the GKE-supported annotation.
+#
+# GKE’s Ingress controller maps an external GKE Ingress to a Google Cloud external Application Load Balancer,
+# and Google’s current docs say that Ingress for external Application Load Balancers deploys the classic Application Load Balancer.
+#
+# For newer Google Cloud load balancer behavior, the next step would be using
+# Gateway API instead of the older Ingress controller model. For example, a GKE
+# GatewayClass such as gke-l7-global-external-managed can be used for newer
+# global external Application Load Balancer patterns.
+#
+# Google’s Gateway API docs recommend gke-l7-global-external-managed over gke-l7-gxlb when deploying a global external Application Load Balancer,
+# because it provides newer security and traffic-management capabilities.

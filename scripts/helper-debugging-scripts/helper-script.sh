@@ -1,5 +1,42 @@
 #!/usr/bin/env bash
 
+# Redis helper script.
+#
+# This script does not stop, replace, or restart the running demo app container.
+# It uses kubectl exec to start a separate, short-lived helper process inside
+# one existing demo-app Pod.
+#
+# Runtime flow:
+#   local machine
+#     -> gcloud compute ssh through IAP
+#     -> bastion VM
+#     -> kubectl exec into one demo-app Pod
+#     -> inline Python Redis client
+#     -> Memorystore Redis Cluster
+#
+# The main app process inside the Pod keeps running while this helper process
+# runs. The helper process connects to Redis, performs the requested action
+# such as get/reset/set/keys/delete, prints the result, and exits.
+#
+# We run the Redis command from inside the app Pod because the Pod already has:
+#   - REDIS_HOST
+#   - REDIS_PORT
+#   - REDIS_DB
+#   - REDIS_CLUSTER_MODE
+#   - private network access to Redis
+#
+# This avoids exposing Redis publicly, installing Redis tooling locally, or
+# manually copying Redis connection details into the script.
+#
+# The helper may briefly use a small amount of CPU and memory in the selected
+# Pod, but it should not meaningfully interrupt the app because it is a tiny,
+# short-lived process. It would only become a concern if heavy/debug commands
+# were run repeatedly or if the Pod had extremely tight resource limits.
+#
+# The demo app is a server-side Python web app. It serves the HTML page and
+# talks to Redis, so the container is effectively running the backend web
+# process for the app.
+
 # Exit immediately on errors, treat unset variables as errors, and fail the
 # script if any command in a pipeline fails.
 set -euo pipefail
@@ -252,7 +289,7 @@ try:
         deleted = r.delete("counter")
         print(f"deleted counter={deleted}")
 
-        
+
 
     # This should not happen because Bash validates the action before running the Python script, but keep a defensive check here too.
     #
