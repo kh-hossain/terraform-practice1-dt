@@ -1,14 +1,50 @@
+# BackendConfig is a GKE-specific custom resource.
+# It lets us customize the Google Cloud Load Balancer backend service that GKE creates from the Kubernetes Service/Ingress.
 apiVersion: cloud.google.com/v1
 kind: BackendConfig
+
 metadata:
+  # Name referenced by the Service annotation.
+  #
+  # The Service must point to this BackendConfig for these settings to affect the load balancer backend.
   name: demo-app-backendconfig
+
+  # BackendConfig is namespace-scoped, so it must be in the same namespace as the Service that references it.
   namespace: demo-app
+
 spec:
+    # Google Cloud Load Balancer health check.
+    #
+    # This is separate from the Kubernetes readiness/liveness probes in the
+    # Deployment. BackendConfig controls the health check on the Google Cloud
+    # backend service created by GKE Ingress.
+    #
+    # Kubernetes probes decide whether Pods are ready or should be restarted.
+    # This BackendConfig health check decides whether the external load balancer
+    # should consider the backend endpoints healthy.
   healthCheck:
+    # How often the Google Cloud Load Balancer health checker sends a request to each backend Pod endpoint.
     checkIntervalSec: 15
+
+    # How long the health checker waits for a response before treating the health check attempt as failed.
     timeoutSec: 5
+
+    # Number of successful checks needed before a backend is considered healthy.
     healthyThreshold: 1
+
+    # Number of failed checks needed before a backend is considered unhealthy.
     unhealthyThreshold: 3
+
+    # Use an HTTP health check because the demo app serves HTTP traffic.
     type: HTTP
+
+    # Main branch note:
+    # The app does not have a dedicated /health endpoint, so the load balancer checks the root path.
+    #
+    # This works because the app responds on "/", but it also means health checks hit the same route as user traffic.
     requestPath: /
+
+    # Container port where the app listens.
+    #
+    # The Service forwards traffic to this port, and the load balancer health check uses it to test whether the backend is reachable.
     port: 8000

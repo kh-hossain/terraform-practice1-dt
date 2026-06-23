@@ -1,13 +1,40 @@
+# Ingress exposes the Kubernetes Service through a Google Cloud external (classic) HTTP Application Load Balancer.
+#
+# In this project, users reach the app through the load balancer public IP, and
+# the load balancer forwards traffic to the demo-app Service.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
+
 metadata:
+  # Ingress resource name.
   name: demo-app-ingress
+
+  # Ingress is created in the same namespace as the Service it routes to.
   namespace: demo-app
+
   annotations:
+    # Tell GKE to use the GCE/GKE Ingress controller.
+    #
+    # This is important for GKE. In this project, using spec.ingressClassName did
+    # not cause the GKE controller to reconcile the Ingress correctly, so we use
+    # the GKE-supported annotation.
+    #
+    # "gce" creates an external (classic) Google Cloud HTTP(S) Load Balancer.
     kubernetes.io/ingress.class: "gce"
+
 spec:
+  # defaultBackend handles all requests that do not match a more specific host
+  # or path rule.
+  #
+  # Since this simple app has only one route and no custom domain/path routing,
+  # all HTTP traffic goes to demo-app-service.
   defaultBackend:
     service:
+      # Kubernetes Service that fronts the demo app Pods.
       name: demo-app-service
+
       port:
+        # Service port exposed by demo-app-service.
+        #
+        # The Ingress sends traffic to Service port 80. The Service then forwards that traffic to the app container's targetPort 8000.
         number: 80

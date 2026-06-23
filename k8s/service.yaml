@@ -1,16 +1,154 @@
+# Service gives the demo app Pods a stable internal network endpoint.
+#
+# Kubernetes creates an internal DNS name for the Service, such as:
+#   demo-app-service.demo-app.svc.cluster.local
+# 
+# So a Kubernetes Service gets both:
+# 1. A stable DNS name
+# 2. A stable internal ClusterIP
+#
+# Kubernetes also assigns the Service an internal ClusterIP from the Service
+# secondary range. Clients do not need to know individual Pod IPs.
+#
+# The Service then forwards traffic to the current Ready Pods that match its selector.
+#
+# Pods are temporary and can be recreated with different IPs. The Service uses a
+# label selector to continuously find the current demo app Pods and route traffic
+# to them.
+#
+# When a Deployment creates, replaces, or restarts Pods,
+# those Pods can get new Pod IP addresses. We do not want the Ingress or other
+# clients to track individual Pod IPs directly.
+#
+# The Service solves that by selecting Pods using labels.
+#
+# This selector:
+#   app: demo-app
+#
+# matches Pods created by the Deployment because the Deployment template gives
+# each Pod the same label:
+#   app: demo-app
+#
+# Kubernetes continuously watches for Pods that match the selector and treats
+# them as endpoints behind this Service. If a Pod is deleted, recreated, or
+# replaced with a new IP, the Service endpoint list is updated automatically.
+#
+# The selector is the main way this Service finds the app Pods. Readiness also
+# matters: Pods that are not Ready should not receive normal Service traffic.
 apiVersion: v1
 kind: Service
+
 metadata:
+  # Service name referenced by the Ingress.
+  #Kubernetes also assigns the Service an internal ClusterIP.
+  #
+  # This ClusterIP is a virtual IP, meaning it is not the IP of one specific Pod,
+  # node, or VM. Instead, Kubernetes uses it as a stable internal address for the
+  # Service and forwards traffic from that address to one of the current Ready Pods
+  # selected by the Service.
+  #
+  # Example:
+  #   Service ClusterIP: 10.40.0.25:80
+  #   Pod endpoint:      10.30.1.10:8000
+  #
+  # Clients use the stable Service IP/name, while Kubernetes handles forwarding to
+  # the changing Pod IPs behind it.
   name: demo-app-service
+
+  # Service is created in the same namespace as the app Deployment and Pods.
   namespace: demo-app
+
   annotations:
+    # Create a Network Endpoint Group, or NEG, for this Service when it is used by GKE Ingress.
+    #
+    # With container-native load balancing, the Google Cloud Load Balancer can
+    # send traffic directly to Pod endpoints instead of only through node ports.
+    #
+    # A NEG is a Google Cloud Load Balancer backend object that contains network
+    # endpoints. For GKE container-native load balancing, those endpoints are the
+    # Pod IPs and ports selected by this Service.
+    #
+    # Without a NEG, a load balancer often sends traffic to node-level ports first,
+    # and then Kubernetes forwards traffic from the node to a Pod.
+    #
+    # With a NEG, the Google Cloud Load Balancer can send traffic more directly
+    # to the healthy Pod endpoints behind the Service.
+    #
+    # In simple terms:
+    #   Ingress -> Google Cloud Load Balancer -> NEG -> demo app Pods
+    #
+    # This fits our private GKE design because the Pods are still private. The
+    # public entry point is the load balancer, not the Pods themselves.
     cloud.google.com/neg: '{"ingress": true}'
+
+    # Attach the BackendConfig to this Service.
+    #
+    # The BackendConfig customizes the Google Cloud Load Balancer backend service
+    # created by GKE Ingress, including its health check settings.
+    #
+    # "default" means apply this BackendConfig to the default Service port.
+    #
+    # GKE Ingress creates a Google Cloud backend service for traffic going to
+    # this Kubernetes Service. BackendConfig lets us customize that backend
+    # service, including the load balancer health check settings.
+    #
+    # "default" means: apply this BackendConfig to the Service's default backend
+    # port. Since this Service has only one port, port 80, using "default" is
+    # enough.
+    #
+    # For Services with multiple ports, you can map BackendConfigs per port, for
+    # example:
+    #   cloud.google.com/backend-config: '{"ports": {"http": "config-a", "admin": "config-b"}}'
+    #
+    # In this project we only have one HTTP port, so the simpler "default" form
+    # is appropriate.
     cloud.google.com/backend-config: '{"default": "demo-app-backendconfig"}'
+
 spec:
+  # Expose the Service only inside the Kubernetes cluster. ClusterIP creates an internal-only Kubernetes Service.
+  #
+  # The Service itself does not create a public IP. Public access comes from the
+  # Ingress, which creates the external Google Cloud HTTP Load Balancer.
+  #
+  # This Service does not create a public IP address by itself. That is
+  # intentional: we do not want every Service to be directly exposed to the
+  # internet.
+  #
+  # Instead, the Service provides a stable internal target for the Ingress. The
+  # Ingress is the resource responsible for creating the external Google Cloud
+  # HTTP Load Balancer.
+  #
+  # Traffic flow:
+  #   Internet user
+  #     -> Google Cloud HTTP Load Balancer created by Ingress
+  #     -> demo-app-service ClusterIP/NEG
+  #     -> demo app Pods on targetPort 8000
+  #
+  # Other Service types exist:
+  # - ClusterIP: internal-only Service inside the cluster.
+  # - NodePort: opens a port on each node; often used behind load balancers but less direct than NEG-based container-native load balancing.
+  # - LoadBalancer: creates a cloud load balancer directly for the Service.
+  # - ExternalName: maps the Service name to an external DNS name.
+  #
+  # We use ClusterIP because Ingress should manage the public HTTP entry point,
+  # while the Service remains an internal stable backend for the app Pods.
   type: ClusterIP
+
+  # Select Pods with this label.
+  #
+  # This must match the labels on the Deployment's Pod template.
   selector:
     app: demo-app
+
   ports:
     - name: http
+
+      # Port exposed by the Service.
+      #
+      # The Ingress sends traffic to demo-app-service on port 80.
       port: 80
+
+      # Port on the container/Pod that actually receives the traffic.
+      #
+      # The demo app listens on port 8000 inside the container.
       targetPort: 8000

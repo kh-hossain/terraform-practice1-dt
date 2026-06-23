@@ -1,4 +1,14 @@
+# Namespace creates a logical boundary inside the Kubernetes cluster.
+#
+# We deploy the demo app resources into their own namespace instead of putting
+# everything in the default namespace. This keeps the app's Deployment, Service,
+# Ingress, and BackendConfig grouped together and easier to manage.
+
+# In Kubernetes, every resource type belongs to a specific API group and version.
+# Namespace is a core Kubernetes resource, and core resources use apiVersion: v1.
 apiVersion: v1
 kind: Namespace
+
 metadata:
+  # Name of the namespace used by the demo app manifests.
   name: demo-app
